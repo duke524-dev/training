@@ -125,7 +125,7 @@ def fetch_historical_forecast_data(
         "models": model
     }
     
-    response = requests.get(base_url, params=params, timeout=30)
+    response = requests.get(base_url, params=params, timeout=60)
     response.raise_for_status()
     
     return response.json()
