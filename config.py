@@ -5,7 +5,7 @@ All configurable constants are defined here.
 
 # Date range settings for data collection
 DATE_CONFIG = {
-    "start_days_ago": 370,  # Days ago to start collecting data
+    "start_days_ago": 20,  # Days ago to start collecting data
     "end_days_ago": 5,      # Days ago to end collecting data (ERA5 has ~5 day delay)
 }
 
@@ -37,7 +37,7 @@ LOCATIONS = [
 TRAINING_CONFIG = {
     "data_dir": "data",
     "output_dir": "models",
-    "alpha": 1.0,           # Ridge regularization strength
+    "alpha": 100,           # Ridge regularization strength
     "test_size": 0.2,       # Train/test split ratio
     "random_state": 42,     # For reproducibility
 }
