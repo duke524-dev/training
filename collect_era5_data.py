@@ -20,6 +20,8 @@ import numpy as np
 from datetime import datetime, timedelta
 import os
 
+from config import DATE_CONFIG, LOCATIONS, ZEUS_VARIABLES
+
 
 # Conversion constants
 CELSIUS_TO_KELVIN = 273.15
@@ -33,16 +35,6 @@ OPENMETEO_VARIABLES = [
     "precipitation",
     "wind_speed_100m",
     "wind_direction_100m",
-]
-
-# Zeus variable names
-ZEUS_VARIABLES = [
-    "2m_temperature",
-    "2m_dewpoint_temperature",
-    "surface_pressure",
-    "total_precipitation",
-    "100m_u_component_of_wind",
-    "100m_v_component_of_wind",
 ]
 
 
@@ -231,18 +223,10 @@ def main():
     for i, var in enumerate(ZEUS_VARIABLES, 1):
         print(f"  {i}. {var}")
     
-    # Define locations
-    locations = [
-        {"name": "New York", "latitude": 40.7128, "longitude": -74.0060},
-        {"name": "London", "latitude": 51.5074, "longitude": -0.1278},
-        {"name": "Tokyo", "latitude": 35.6762, "longitude": 139.6503},
-        {"name": "Sydney", "latitude": -33.8688, "longitude": 151.2093},
-        {"name": "Berlin", "latitude": 52.5200, "longitude": 13.4050},
-    ]
-    
-    # Date range
-    start_days_ago = 12
-    end_days_ago = 5
+    # Use config values
+    locations = LOCATIONS
+    start_days_ago = DATE_CONFIG["start_days_ago"]
+    end_days_ago = DATE_CONFIG["end_days_ago"]
     
     print(f"\nLocations: {len(locations)}")
     

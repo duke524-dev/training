@@ -28,31 +28,11 @@ from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 import warnings
 warnings.filterwarnings('ignore')
 
+from config import TRAINING_CONFIG, ZEUS_VARIABLES, FEATURE_COLUMNS, TARGET_COLUMN
+
 
 # Configuration
-CONFIG = {
-    "data_dir": "data",
-    "output_dir": "models",
-    "alpha": 1.0,           # Ridge regularization strength
-    "test_size": 0.2,
-    "random_state": 42,
-}
-
-# Zeus variables to train models for
-ZEUS_VARIABLES = [
-    "2m_temperature",
-    "2m_dewpoint_temperature",
-    "surface_pressure",
-    "total_precipitation",
-    "100m_u_component_of_wind",
-    "100m_v_component_of_wind",
-]
-
-# Feature columns (forecast model outputs)
-FEATURE_COLUMNS = ["gem_seamless", "gfs_seamless", "jma_seamless", "meteofrance"]
-
-# Target column
-TARGET_COLUMN = "era5"
+CONFIG = TRAINING_CONFIG.copy()
 
 
 def find_integrated_file(variable: str, data_dir: str = "data") -> str:

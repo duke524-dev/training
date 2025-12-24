@@ -21,16 +21,7 @@ import os
 from glob import glob
 from datetime import datetime
 
-
-# Zeus variables to process
-ZEUS_VARIABLES = [
-    "2m_temperature",
-    "2m_dewpoint_temperature",
-    "surface_pressure",
-    "total_precipitation",
-    "100m_u_component_of_wind",
-    "100m_v_component_of_wind",
-]
+from config import ZEUS_VARIABLES
 
 # Models to include
 MODELS = [
