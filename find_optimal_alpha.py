@@ -266,7 +266,7 @@ def main():
         
         print(f"{variable:<35} {best_alpha:>15.2f} {best_rmse:>12.4f} {improvement_str:>12}")
     
-    # Save results
+    # Save detailed results
     output_file = f"alpha_optimization_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     with open(output_file, "w") as f:
         json.dump({
@@ -278,6 +278,25 @@ def main():
         }, f, indent=2)
     
     print(f"\n  Results saved to: {output_file}")
+    
+    # Remove old optimal_alphas.json file if it exists
+    optimal_alphas_file = "optimal_alphas.json"
+    if os.path.exists(optimal_alphas_file):
+        try:
+            os.remove(optimal_alphas_file)
+            print(f"  Removed old {optimal_alphas_file}")
+        except OSError as e:
+            print(f"  [WARNING] Could not remove old {optimal_alphas_file}: {e}")
+    
+    # Save optimal alphas in simple format for training script
+    optimal_alphas_dict = {r["variable"]: r["best_alpha"] for r in all_results}
+    with open(optimal_alphas_file, "w") as f:
+        json.dump({
+            "timestamp": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+            "optimal_alphas": optimal_alphas_dict
+        }, f, indent=2)
+    
+    print(f"  Optimal alphas saved to: {optimal_alphas_file}")
     
     # Recommendations
     print("\n" + "=" * 70)

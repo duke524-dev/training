@@ -171,7 +171,8 @@ def main():
         ("collect_forecast_data.py", "Collect forecast data (6 variables, 4 models)"),
         ("collect_era5_data.py", "Collect ERA5 observation data (6 variables)"),
         ("integrate_data.py", "Integrate all data into datasets"),
-        ("train_model.py", "Train 6 ensemble models"),
+        ("find_optimal_alpha.py", "Find optimal alpha values for each variable"),
+        ("train_model.py", "Train 6 ensemble models with optimized alphas"),
     ]
     
     total_start = time.time()

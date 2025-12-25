@@ -35,6 +35,24 @@ from config import TRAINING_CONFIG, ZEUS_VARIABLES, FEATURE_COLUMNS, TARGET_COLU
 CONFIG = TRAINING_CONFIG.copy()
 
 
+def load_optimal_alphas(alpha_file: str = "optimal_alphas.json") -> Dict[str, float]:
+    """
+    Load optimal alpha values from file.
+    Returns dictionary mapping variable names to optimal alpha values.
+    If file doesn't exist, returns empty dict (will use default alpha).
+    """
+    if not os.path.exists(alpha_file):
+        return {}
+    
+    try:
+        with open(alpha_file, "r") as f:
+            data = json.load(f)
+            return data.get("optimal_alphas", {})
+    except Exception as e:
+        print(f"  [WARNING] Could not load optimal alphas from {alpha_file}: {e}")
+        return {}
+
+
 def find_integrated_file(variable: str, data_dir: str = "data") -> str:
     """Find the latest integrated data file for a specific variable."""
     safe_var_name = variable.replace("/", "_")
@@ -157,8 +175,17 @@ def train_model_for_variable(
     print(f"\n  Baseline (Ensemble Mean):")
     print(f"    RMSE: {baseline_metrics['rmse']:.4f}")
     
+    # Get optimal alpha for this variable (if available)
+    optimal_alphas = load_optimal_alphas()
+    alpha_to_use = optimal_alphas.get(variable, config["alpha"])
+    
+    if variable in optimal_alphas:
+        print(f"  Using optimized alpha: {alpha_to_use:.2f} (from alpha optimization)")
+    else:
+        print(f"  Using default alpha: {alpha_to_use:.2f} (no optimization found)")
+    
     # Train Ridge model
-    model = Ridge(alpha=config["alpha"])
+    model = Ridge(alpha=alpha_to_use)
     model.fit(X_train_scaled, y_train)
     
     # Evaluate
@@ -196,6 +223,7 @@ def train_model_for_variable(
             "feature_cols": feature_cols,
             "metrics": test_metrics,
             "config": config,
+            "alpha_used": alpha_to_use,
             "timestamp": timestamp
         }, f)
     
@@ -208,7 +236,8 @@ def train_model_for_variable(
         "improvement_percent": round(improvement, 2),
         "coefficients": {feat: round(coef, 6) for feat, coef in zip(feature_cols, model.coef_)},
         "intercept": round(float(model.intercept_), 6),
-        "alpha": config["alpha"],
+        "alpha": round(float(alpha_to_use), 6),
+        "alpha_source": "optimized" if variable in optimal_alphas else "default",
         "timestamp": timestamp
     }
     
@@ -223,7 +252,8 @@ def train_model_for_variable(
         "model_path": model_path,
         "metrics": test_metrics,
         "baseline_rmse": baseline_metrics['rmse'],
-        "improvement": improvement
+        "improvement": improvement,
+        "alpha_used": alpha_to_use
     }
 
 
@@ -236,11 +266,21 @@ def main():
     
     config = CONFIG.copy()
     
+    # Check for optimal alphas
+    optimal_alphas = load_optimal_alphas()
+    if optimal_alphas:
+        print("\n[INFO] Found optimal alpha values from optimization:")
+        for var, alpha in optimal_alphas.items():
+            print(f"  {var}: {alpha:.2f}")
+    else:
+        print(f"\n[INFO] Using default alpha: {config['alpha']} (no optimization file found)")
+    
     print("\nVariables to train:")
     for i, var in enumerate(ZEUS_VARIABLES, 1):
-        print(f"  {i}. {var}")
+        alpha_val = optimal_alphas.get(var, config['alpha'])
+        print(f"  {i}. {var} (alpha={alpha_val:.2f})")
     
-    print(f"\nModel: Ridge Regression (alpha={config['alpha']})")
+    print(f"\nModel: Ridge Regression")
     print(f"Features: {FEATURE_COLUMNS}")
     print(f"Target: {TARGET_COLUMN}")
     

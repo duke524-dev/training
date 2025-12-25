@@ -26,9 +26,10 @@ import os
 from config import DATE_CONFIG, LOCATIONS, ZEUS_VARIABLES
 
 
-# Conversion constants
-CELSIUS_TO_KELVIN = 273.15
-HPA_TO_PA = 100.0
+# Conversion constants for Zeus Subnet unit requirements
+# Zeus Subnet requires: K (Kelvin), Pa (Pascals), mm (millimeters), m/s (meters per second)
+CELSIUS_TO_KELVIN = 273.15  # Convert Celsius to Kelvin for temperature variables
+HPA_TO_PA = 100.0           # Convert hPa to Pa for pressure (1 hPa = 100 Pa)
 
 # Variables to collect from Open-Meteo
 OPENMETEO_VARIABLES = [
@@ -147,12 +148,18 @@ def process_to_dataframe(data: dict, model: str) -> pd.DataFrame:
     wind_speed = hourly_data.get("wind_speed_100m", [])
     wind_direction = hourly_data.get("wind_direction_100m", [])
     
-    # Convert units and calculate wind components
+    # Convert units to match Zeus Subnet requirements:
+    # - Temperature: Open-Meteo returns Celsius → Convert to Kelvin (K)
+    # - Pressure: Open-Meteo returns hPa → Convert to Pascals (Pa)
+    # - Precipitation: Open-Meteo returns mm → Already in correct unit (mm)
+    # - Wind: Open-Meteo returns m/s → Already in correct unit (m/s), will calculate U/V components
     temp_kelvin = [t + CELSIUS_TO_KELVIN if t is not None else None for t in temp_celsius]
     dewpoint_kelvin = [t + CELSIUS_TO_KELVIN if t is not None else None for t in dewpoint_celsius]
     pressure_pa = [p * HPA_TO_PA if p is not None else None for p in pressure_hpa]
     
-    # Calculate U and V wind components
+    # Calculate U and V wind components (Zeus Subnet requires m/s)
+    # U: positive = eastward, negative = westward
+    # V: positive = northward, negative = southward
     u_components = []
     v_components = []
     for speed, direction in zip(wind_speed, wind_direction):

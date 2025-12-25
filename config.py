@@ -37,7 +37,7 @@ LOCATIONS = [
 TRAINING_CONFIG = {
     "data_dir": "data",
     "output_dir": "models",
-    "alpha": 100,           # Ridge regularization strength
+    "alpha": 0.01,           # Ridge regularization strength
     "test_size": 0.2,       # Train/test split ratio
     "random_state": 42,     # For reproducibility
 }
