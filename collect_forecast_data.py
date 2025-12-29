@@ -23,7 +23,7 @@ import numpy as np
 from datetime import datetime, timedelta
 import os
 
-from config import DATE_CONFIG, LOCATIONS, ZEUS_VARIABLES
+from config import DATE_CONFIG, LOCATIONS, ZEUS_VARIABLES, FORECAST_CONFIG
 
 
 # Conversion constants for Zeus Subnet unit requirements
@@ -106,10 +106,23 @@ def fetch_historical_forecast_data(
     start_date: str,
     end_date: str,
     model: str,
-    timezone: str = "auto"
+    timezone: str = "auto",
+    forecast_hours: int = None
 ) -> dict:
     """
     Fetch historical forecast data from Open-Meteo API.
+    
+    Args:
+        latitude: Latitude coordinate
+        longitude: Longitude coordinate
+        start_date: Start date (YYYY-MM-DD)
+        end_date: End date (YYYY-MM-DD)
+        model: Weather model name
+        timezone: Timezone (default: "auto")
+        forecast_hours: Forecast lead time in hours (None = seamless blend, 1 = 1 hour ahead, etc.)
+    
+    Returns:
+        API response dictionary
     """
     base_url = "https://historical-forecast-api.open-meteo.com/v1/forecast"
     
@@ -125,6 +138,11 @@ def fetch_historical_forecast_data(
         "precipitation_unit": "mm",
         "models": model
     }
+    
+    # Note: Open-Meteo Historical Forecast API doesn't support forecast_hours parameter
+    # The seamless models automatically blend forecasts from different initialization times
+    # The forecast_hours parameter is accepted but not sent to API (causes 400 errors if included)
+    # Seamless models use forecasts with varying lead times (typically 0-240 hours)
     
     response = requests.get(base_url, params=params, timeout=60)
     response.raise_for_status()
@@ -192,10 +210,18 @@ def collect_data_for_model(
     model: str,
     locations: list[dict],
     start_days_ago: int = 12,
-    end_days_ago: int = 5
+    end_days_ago: int = 5,
+    forecast_hours: int = None
 ) -> pd.DataFrame:
     """
     Collect historical forecast data for a specific model across multiple locations.
+    
+    Args:
+        model: Weather model name
+        locations: List of location dictionaries
+        start_days_ago: Days ago to start collecting
+        end_days_ago: Days ago to end collecting
+        forecast_hours: Forecast lead time in hours (None = seamless blend)
     """
     start_date, end_date = get_date_range(start_days_ago, end_days_ago)
     all_data = []
@@ -207,7 +233,8 @@ def collect_data_for_model(
                 longitude=location["longitude"],
                 start_date=start_date,
                 end_date=end_date,
-                model=model
+                model=model,
+                forecast_hours=forecast_hours
             )
             
             df = process_to_dataframe(data, model)
@@ -249,10 +276,18 @@ def collect_all_models(
     locations: list[dict],
     models: list[str] = None,
     start_days_ago: int = 12,
-    end_days_ago: int = 5
+    end_days_ago: int = 5,
+    forecast_hours: int = None
 ) -> dict[str, pd.DataFrame]:
     """
     Collect data from all specified models.
+    
+    Args:
+        locations: List of location dictionaries
+        models: List of model names (None = all available)
+        start_days_ago: Days ago to start collecting
+        end_days_ago: Days ago to end collecting
+        forecast_hours: Forecast lead time in hours (None = seamless blend)
     """
     if models is None:
         models = list(AVAILABLE_MODELS.keys())
@@ -264,6 +299,9 @@ def collect_all_models(
     print(f"Locations: {len(locations)}")
     print(f"Variables: {len(ZEUS_VARIABLES)}")
     print(f"  - {', '.join(ZEUS_VARIABLES)}")
+    print(f"Forecast lead time: Seamless blend (automatic, 0-240 hours)")
+    if forecast_hours is not None:
+        print(f"  Note: forecast_hours={forecast_hours} specified but not supported by API (using seamless blend)")
     
     all_model_data = {}
     
@@ -280,7 +318,8 @@ def collect_all_models(
             model=model,
             locations=locations,
             start_days_ago=start_days_ago,
-            end_days_ago=end_days_ago
+            end_days_ago=end_days_ago,
+            forecast_hours=forecast_hours
         )
         
         if not df.empty:
@@ -311,19 +350,24 @@ def main():
     locations = LOCATIONS
     start_days_ago = DATE_CONFIG["start_days_ago"]
     end_days_ago = DATE_CONFIG["end_days_ago"]
+    forecast_hours = FORECAST_CONFIG.get("forecast_hours")
     
     # Models to collect
     models_to_collect = list(AVAILABLE_MODELS.keys())
     
     print(f"\nLocations: {len(locations)}")
     print(f"Models: {len(models_to_collect)}")
+    print(f"Forecast lead time: Seamless blend (automatic, 0-240 hours)")
+    if forecast_hours is not None:
+        print(f"  Note: forecast_hours={forecast_hours} specified but not supported by API (using seamless blend)")
     
     # Collect data
     all_model_data = collect_all_models(
         locations=locations,
         models=models_to_collect,
         start_days_ago=start_days_ago,
-        end_days_ago=end_days_ago
+        end_days_ago=end_days_ago,
+        forecast_hours=forecast_hours
     )
     
     if not all_model_data:

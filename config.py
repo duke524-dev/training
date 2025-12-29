@@ -9,6 +9,15 @@ DATE_CONFIG = {
     "end_days_ago": 5,      # Days ago to end collecting data (ERA5 has ~5 day delay)
 }
 
+# Forecast lead time settings
+FORECAST_CONFIG = {
+    "forecast_hours": None,  # Forecast lead time in hours (NOT SUPPORTED by Historical Forecast API)
+    # Note: Open-Meteo Historical Forecast API uses seamless forecast blending automatically
+    # The seamless models blend forecasts from different initialization times (typically 0-240 hours lead time)
+    # This parameter is kept for future use but currently has no effect
+    # To get specific lead times, you would need to use a different API endpoint or method
+}
+
 # Location settings
 LOCATIONS = [
     {"name": "New York", "latitude": 40.7128, "longitude": -74.0060},
